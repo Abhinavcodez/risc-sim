@@ -1,0 +1,8 @@
+# generate_memtest.py
+with open("memtest.bin", "wb") as f:
+    # Example: write 4 64-bit values at different addresses
+    f.write((0x0102030405060708).to_bytes(8, byteorder='little'))
+    f.write((0x1112131415161718).to_bytes(8, byteorder='little'))
+    f.write((0x2122232425262728).to_bytes(8, byteorder='little'))
+    f.write((0x3132333435363738).to_bytes(8, byteorder='little'))
+print("memtest.bin generated!")

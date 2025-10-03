@@ -1,29 +1,43 @@
-# Makefile for RISC-V CPU + GPU verification project
-.PHONY: all clean
+# Makefile for riscv_sim
 
-ELF = tests/hello.elf
-BIN = tests/hello.bin
-CPU_SIM = sim/sim_main
+# Compilers
+CC = gcc
+NVCC = nvcc
 
-RISCV_GCC = riscv64-unknown-elf-gcc
-RISCV_OBJCOPY = riscv64-unknown-elf-objcopy
+# Flags
+CFLAGS = -O2 -Wall
+LDFLAGS = -lcudart
 
-CFLAGS = -O2 -std=c++17
-CUDA_FLAGS = -O2
+# Sources
+CPU_SRC = cpu/*.c
+MEM_SRC = memory/*.c
+UTIL_SRC = utils/*.c
+GPU_OBJ = gpu.o
+MAIN = main.c
 
-all: $(ELF) $(CPU_SIM)
+# Output
+TARGET = riscv_sim
 
-# RISC-V ELF
-# Build freestanding RISC-V ELF binary
-$(ELF): tests/hello.c tests/link.ld
-	riscv64-unknown-elf-gcc -march=rv64imac -mabi=lp64 -ffreestanding -nostdlib -T tests/link.ld -o $(ELF) tests/hello.c
-	riscv64-unknown-elf-objcopy -O binary $(ELF) $(BIN)
+# Default target
+all: $(TARGET)
 
-# CPU simulation + GPU interface
-# CPU simulation + GPU interface
-$(CPU_SIM): sim/sim_main.cpp sim/cpu.c sim/cpu.h sim/gpu_interface.cu
-	nvcc -std=c++17 -O2 sim/sim_main.cpp sim/cpu.c sim/gpu_interface.cu -o $(CPU_SIM)
+# Compile GPU CUDA code
+gpu.o: gpu/gpu.cu
+	$(NVCC) -c gpu/gpu.cu -o gpu.o
 
+# Compile and link everything
+$(TARGET): $(MAIN) $(CPU_SRC) $(MEM_SRC) $(UTIL_SRC) $(GPU_OBJ)
+	$(CC) $(CFLAGS) $(MAIN) $(CPU_SRC) $(MEM_SRC) $(UTIL_SRC) $(GPU_OBJ) $(LDFLAGS) -o $(TARGET)
 
+# Clean build files
 clean:
-	rm -f $(ELF) $(BIN) $(CPU_SIM)
+	rm -f $(TARGET) $(GPU_OBJ)
+
+# Run all tests
+run: $(TARGET)
+	@echo "\n=== Running CPU Verification (hello.bin) ==="
+	./$(TARGET) tests/hello.bin
+	@echo "\n=== Running GPU Verification (vecadd.bin) ==="
+	./$(TARGET) tests/vecadd.bin
+	@echo "\n=== Running Memory / Paging / TLB Verification (memtest.bin) ==="
+	./$(TARGET) tests/memtest.bin

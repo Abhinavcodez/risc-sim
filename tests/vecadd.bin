@@ -1,0 +1,17 @@
+// generate_vecadd.c
+#include <stdio.h>
+#include <stdint.h>
+
+int main(){
+    FILE *f = fopen("tests/vecadd.bin","wb");
+    uint32_t program[] = {
+        0x00000513, // ADDI x10,x0,4     ; n=4
+        0x00000593, // ADDI x11,x0,0     ; ptr A offset=0
+        0x00400613, // ADDI x12,x0,16    ; ptr B offset=16
+        0x00800693, // ADDI x13,x0,32    ; ptr C offset=32
+        0x0000007F  // GPU_VEC custom instruction
+    };
+    fwrite(program, sizeof(program),1,f);
+    fclose(f);
+    return 0;
+}
