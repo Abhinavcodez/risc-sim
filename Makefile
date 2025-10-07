@@ -23,6 +23,17 @@ UTIL_OBJS    = $(UTIL_SRCS:.c=.o)
 GPU_OBJS     = $(GPU_SRCS:.cu=.o)
 MAIN_OBJ     = $(MAIN_SRC:.c=.o)
 
+#Paths
+TEST_SRC = tests/hello.S
+TEST_OBJ = tests/hello.o
+TEST_ELF = tests/hello.elf
+TEST_BIN = tests/hello.bin
+
+# RISC-V toolchain
+RISCV_AS = riscv64-unknown-elf-as
+RISCV_LD = riscv64-unknown-elf-ld
+RISCV_OBJCOPY = riscv64-unknown-elf-objcopy
+
 OBJS = $(CPU_OBJS) $(MEM_OBJS) $(UTIL_OBJS) $(GPU_OBJS) $(MAIN_OBJ)
 
 # =========================================================
@@ -35,6 +46,27 @@ $(TARGET): $(OBJS)
 	@echo "[LD] Linking..."
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 	@echo "✅ Build complete: $(TARGET)"
+
+# =========================================================
+# Test target: build and run hello test
+# =========================================================
+.PHONY: test-hello
+test-hello: $(TEST_BIN) riscv_sim
+	@echo "=== Running hello test ==="
+	./riscv_sim $(TEST_BIN)
+
+# Step 1: Assemble
+$(TEST_OBJ): $(TEST_SRC)
+	$(RISCV_AS) -o $@ $<
+
+# Step 2: Link
+$(TEST_ELF): $(TEST_OBJ)
+	$(RISCV_LD) -o $@ $<
+
+# Step 3: Convert to binary
+$(TEST_BIN): $(TEST_ELF)
+	$(RISCV_OBJCOPY) -O binary $< $@
+
 
 # =========================================================
 # Compilation rules

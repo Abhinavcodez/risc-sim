@@ -17,13 +17,19 @@ void cpu_run(unsigned char *memory, size_t mem_size) {
 
     log_cpu("Starting CPU simulation (memory size = %zu bytes)", mem_size);
 
-    while (pc < mem_size && cycles < MAX_CYCLES) {
-        inst = *(uint32_t *)&memory[pc];
-        log_cpu("Fetched instruction 0x%08x at PC = 0x%08llx", inst, (unsigned long long)pc);
+while (pc < mem_size && cycles < MAX_CYCLES) {
+    inst = *(uint32_t *)&memory[pc];
+    log_cpu("Fetched instruction 0x%08x at PC = 0x%08llx", inst, (unsigned long long)pc);
 
-        execute_instruction(inst, regs, &pc);
-        cycles++;
+    // Stop if we hit an ebreak (0x00100073)
+    if (inst == 0x00100073) {
+        log_cpu("Encountered EBREAK at PC = 0x%08llx — halting CPU.", (unsigned long long)pc);
+        break;
     }
+
+    execute_instruction(inst, regs, &pc);
+    cycles++;
+}
 
     log_cpu("CPU halted after %d cycles", cycles);
 }
