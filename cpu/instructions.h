@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
-void execute_instruction(uint32_t inst, uint64_t *regs, uint64_t *pc);
+// Execute one RISC-V instruction
+void execute_instruction(uint32_t inst, uint64_t *regs, uint64_t *pc, unsigned char *memory);
 
 #endif

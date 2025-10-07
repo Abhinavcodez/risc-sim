@@ -23,15 +23,15 @@ UTIL_OBJS    = $(UTIL_SRCS:.c=.o)
 GPU_OBJS     = $(GPU_SRCS:.cu=.o)
 MAIN_OBJ     = $(MAIN_SRC:.c=.o)
 
-#Paths
+# Paths for RISC-V test
 TEST_SRC = tests/hello.S
 TEST_OBJ = tests/hello.o
 TEST_ELF = tests/hello.elf
 TEST_BIN = tests/hello.bin
 
 # RISC-V toolchain
-RISCV_AS = riscv64-unknown-elf-as
-RISCV_LD = riscv64-unknown-elf-ld
+RISCV_AS      = riscv64-unknown-elf-as
+RISCV_LD      = riscv64-unknown-elf-ld
 RISCV_OBJCOPY = riscv64-unknown-elf-objcopy
 
 OBJS = $(CPU_OBJS) $(MEM_OBJS) $(UTIL_OBJS) $(GPU_OBJS) $(MAIN_OBJ)
@@ -51,22 +51,24 @@ $(TARGET): $(OBJS)
 # Test target: build and run hello test
 # =========================================================
 .PHONY: test-hello
-test-hello: $(TEST_BIN) riscv_sim
+test-hello: $(TEST_BIN) $(TARGET)
 	@echo "=== Running hello test ==="
 	./riscv_sim $(TEST_BIN)
 
-# Step 1: Assemble
+# Step 1: Assemble hello.S
 $(TEST_OBJ): $(TEST_SRC)
+	@echo "[RISCV AS] Assembling $<"
 	$(RISCV_AS) -o $@ $<
 
-# Step 2: Link
+# Step 2: Link to ELF
 $(TEST_ELF): $(TEST_OBJ)
+	@echo "[RISCV LD] Linking $<"
 	$(RISCV_LD) -o $@ $<
 
-# Step 3: Convert to binary
+# Step 3: Convert ELF to raw binary
 $(TEST_BIN): $(TEST_ELF)
+	@echo "[OBJCOPY] Converting $< -> $@"
 	$(RISCV_OBJCOPY) -O binary $< $@
-
 
 # =========================================================
 # Compilation rules
@@ -94,8 +96,10 @@ gpu/%.o: gpu/%.cu
 # =========================================================
 # Housekeeping
 # =========================================================
+.PHONY: clean rebuild
+
 clean:
-	@echo "[CLEAN]"
-	rm -f $(OBJS) $(TARGET)
+	@echo "[CLEAN] Removing objects, binaries, and test files"
+	rm -f $(OBJS) $(TARGET) $(TEST_OBJ) $(TEST_ELF) $(TEST_BIN)
 
 rebuild: clean all

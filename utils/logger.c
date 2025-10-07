@@ -1,22 +1,43 @@
-#include "logger.h"
-#include <stdarg.h>
 #include <stdio.h>
-#include <time.h>
+#include <stdarg.h>
+#include "logger.h"
 
-void logger_log(const char *fmt, ...) {
+// General CPU log
+void log_cpu(const char *fmt, ...) {
     va_list args;
     va_start(args, fmt);
-
-    // Optional: timestamp
-    time_t t = time(NULL);
-    struct tm *tm_info = localtime(&t);
-    char time_str[9];
-    strftime(time_str, sizeof(time_str), "%H:%M:%S", tm_info);
-
-    // Print timestamp + message
-    printf(COLOR_BOLD "[%s] " COLOR_RESET, time_str);
+    printf("[CPU] ");
     vprintf(fmt, args);
     printf("\n");
+    va_end(args);
+}
 
+// TLB log
+void log_tlb(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    printf("[TLB] ");
+    vprintf(fmt, args);
+    printf("\n");
+    va_end(args);
+}
+
+// Memory log
+void log_memory(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    printf("[MEM] ");
+    vprintf(fmt, args);
+    printf("\n");
+    va_end(args);
+}
+
+// Error log
+void log_error(const char *fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    printf("[ERROR] ");
+    vprintf(fmt, args);
+    printf("\n");
     va_end(args);
 }

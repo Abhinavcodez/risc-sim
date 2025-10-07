@@ -3,33 +3,28 @@
 #include "../memory/memory.h"
 #include "../memory/paging.h"
 #include "../memory/tlb.h"
-#include "../utils/logger.h"
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <inttypes.h>
 
-#define MAX_CYCLES 100000
+#define MAX_CYCLES 1000000
 
 void cpu_run(unsigned char *memory, size_t mem_size) {
     uint64_t regs[32] = {0};
     uint64_t pc = 0x0;
-    uint32_t inst;
     int cycles = 0;
 
-    log_cpu("Starting CPU simulation (memory size = %zu bytes)", mem_size);
+    paging_init();   // Initialize paging
+    tlb_init();      // Initialize TLB
 
-while (pc < mem_size && cycles < MAX_CYCLES) {
-    inst = *(uint32_t *)&memory[pc];
-    log_cpu("Fetched instruction 0x%08x at PC = 0x%08llx", inst, (unsigned long long)pc);
-
-    // Stop if we hit an ebreak (0x00100073)
-    if (inst == 0x00100073) {
-        log_cpu("Encountered EBREAK at PC = 0x%08llx — halting CPU.", (unsigned long long)pc);
-        break;
+    while (pc < mem_size && cycles < MAX_CYCLES) {
+        uint32_t inst = mem_read32(memory, pc);  // read 32-bit instruction
+        // Optional: log_cpu("Fetched instruction 0x%08x at PC = 0x%016llx", inst, (unsigned long long)pc);
+        execute_instruction(inst, regs, &pc, memory);
+        cycles++;
     }
 
-    execute_instruction(inst, regs, &pc);
-    cycles++;
-}
-
-    log_cpu("CPU halted after %d cycles", cycles);
+    printf("CPU halted after %d cycles\n", cycles);
+    for (int i = 0; i < 32; i++)
+        printf("x%d = %" PRIu64 "\n", i, regs[i]);
 }
