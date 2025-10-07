@@ -1,45 +1,29 @@
 #include "cpu.h"
-#include "../utils/utils.h"
-#include "memory.h"
+#include "instructions.h"
+#include "../memory/memory.h"
+#include "../memory/paging.h"
+#include "../memory/tlb.h"
+#include "../utils/logger.h"
 #include <stdio.h>
+#include <stdint.h>
 
-unsigned char memory[65536];
+#define MAX_CYCLES 100000
 
-void cpu_run(const char *binary_file){
-    init_registers();
-    load_binary(binary_file, memory, 65536);
+void cpu_run(unsigned char *memory, size_t mem_size) {
+    uint64_t regs[32] = {0};
+    uint64_t pc = 0x0;
+    uint32_t inst;
+    int cycles = 0;
 
-    pc = 0;
+    log_cpu("Starting CPU simulation (memory size = %zu bytes)", mem_size);
 
-    // --- Special initialization for vecadd.bin ---
-    if(strstr(binary_file,"vecadd.bin") != NULL){
-        uint64_t *A = (uint64_t*)&memory[0];
-        uint64_t *B = (uint64_t*)&memory[16];
-        for(int i=0;i<4;i++){
-            A[i] = i+1;     // 1,2,3,4
-            B[i] = i+10;    // 10,11,12,13
-        }
+    while (pc < mem_size && cycles < MAX_CYCLES) {
+        inst = *(uint32_t *)&memory[pc];
+        log_cpu("Fetched instruction 0x%08x at PC = 0x%08llx", inst, (unsigned long long)pc);
+
+        execute_instruction(inst, regs, &pc);
+        cycles++;
     }
 
-    while(pc < 65536){
-        uint32_t inst = *(uint32_t*)&memory[pc];
-        execute_instruction(inst);
-        pc += 4;
-        // Stop if instruction is 0
-        if(inst==0) break;
-    }
-
-    // --- Print results ---
-    if(strstr(binary_file,"hello.bin") != NULL){
-        printf("\n--- CPU Registers after hello.bin ---\n");
-        for(int i=0;i<32;i++){
-            printf("x%d = %lu\n",i,regs[i]);
-        }
-    }
-
-    if(strstr(binary_file,"vecadd.bin") != NULL){
-        uint64_t *C = (uint64_t*)&memory[32];
-        printf("\n--- GPU Vector Add Results ---\n");
-        for(int i=0;i<4;i++) printf("C[%d] = %lu\n",i,C[i]);
-    }
+    log_cpu("CPU halted after %d cycles", cycles);
 }

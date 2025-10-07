@@ -1,26 +1,20 @@
-#include <cuda_runtime.h>
-#include <stdint.h>
-#include <stdio.h>
-#include "../utils/utils.h"  // make sure the relative path is correct
+#include "gpu.h"
 
-extern "C" {
-
-// GPU vector add
-void gpu_vector_add(uint64_t *A, uint64_t *B, uint64_t *C, int n){
-    for(int i=0;i<n;i++) C[i] = A[i] + B[i];
-    log_info("GPU vector add completed\n");
+__global__ void vecadd_kernel(uint64_t *A, uint64_t *B, uint64_t *C, int n) {
+    int i = threadIdx.x;
+    if (i < n) C[i] = A[i] + B[i];
 }
 
-// GPU matrix multiply
-void gpu_matrix_mul(uint64_t *A, uint64_t *B, uint64_t *C, int N){
-    for(int i=0;i<N;i++){
-        for(int j=0;j<N;j++){
-            uint64_t sum = 0;
-            for(int k=0;k<N;k++) sum += A[i*N+k]*B[k*N+j];
-            C[i*N+j] = sum;
-        }
-    }
-    log_info("GPU matrix multiply completed\n");
-}
+void gpu_vector_add(uint64_t *A, uint64_t *B, uint64_t *C, int n) {
+    uint64_t *dA, *dB, *dC;
+    cudaMalloc(&dA, n * sizeof(uint64_t));
+    cudaMalloc(&dB, n * sizeof(uint64_t));
+    cudaMalloc(&dC, n * sizeof(uint64_t));
+    cudaMemcpy(dA, A, n * sizeof(uint64_t), cudaMemcpyHostToDevice);
+    cudaMemcpy(dB, B, n * sizeof(uint64_t), cudaMemcpyHostToDevice);
 
-} // extern "C"
+    vecadd_kernel<<<1, n>>>(dA, dB, dC, n);
+
+    cudaMemcpy(C, dC, n * sizeof(uint64_t), cudaMemcpyDeviceToHost);
+    cudaFree(dA); cudaFree(dB); cudaFree(dC);
+}

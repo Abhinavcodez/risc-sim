@@ -2,12 +2,11 @@
 #define CPU_H
 
 #include <stdint.h>
+#include <stddef.h>
 
-extern uint64_t regs[32];   // RISC-V general purpose registers
-extern uint64_t pc;         // Program counter
+extern uint64_t regs[32];
+extern uint64_t pc;
 
-void cpu_run(const char *binary_file);
-void init_registers();
-void execute_instruction(uint32_t inst);
+void cpu_run(unsigned char *memory, size_t mem_size);
 
 #endif
