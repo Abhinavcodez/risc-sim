@@ -5,8 +5,8 @@
 # Compiler setup
 CC      = gcc
 NVCC    = nvcc
-CFLAGS  = -O2 -Wall -Icpu -Imemory -Iutils -Igpu
-LDFLAGS = -lcudart
+LDFLAGS = -no-pie -lcudart
+CFLAGS  = -O2 -Wall -no-pie -Icpu -Imemory -Iutils -Igpu
 TARGET  = riscv_sim
 
 # Folder structure

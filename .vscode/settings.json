@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "iostream": "cpp",
-        "cstdint": "cpp"
+        "cstdint": "cpp",
+        "stdio.h": "c",
+        "map": "cpp"
     }
 }
